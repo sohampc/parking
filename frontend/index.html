@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NTRO | Thermal Anomaly & Fire Intelligence Platform</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- TOP APP BAR -->
+  <header class="app-header">
+    <div class="header-left">
+      <span class="agency-badge">NTRO</span>
+      <div class="title-group">
+        <h1>THERMAL ANOMALY & INDUSTRIAL FIRE INTELLIGENCE PLATFORM</h1>
+        <span class="subtitle">Autonomous Geospatial AI & Early Warning System (NASA FIRMS / OSM / ESA)</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-metric">
+        <span class="metric-label">FEED STATUS</span>
+        <span class="metric-val status-ok" id="feed-status-val">● LIVE STREAMING</span>
+      </div>
+      <div class="status-metric">
+        <span class="metric-label">SENSOR OVERPASS</span>
+        <span class="metric-val" id="telemetry-sensor">VIIRS 375m (NPP)</span>
+      </div>
+      <div class="status-metric">
+        <span class="metric-label">UTC TIME</span>
+        <span class="metric-val mono" id="utc-clock">00:00:00 UTC</span>
+      </div>
+      <div class="status-metric">
+        <span class="metric-label">IST TIME</span>
+        <span class="metric-val mono" id="ist-clock">00:00:00 IST</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="app-body">
+    
+    <!-- LEFT PANEL: CONTROLS & EMERGENCY SOS TRIGGER -->
+    <aside class="side-panel left-panel">
+      
+      <!-- DATA FILTER FORM -->
+      <section class="panel-section">
+        <h2 class="section-title">1. MONITORING REGION & FILTERS</h2>
+        
+        <div class="form-group">
+          <label for="filter-region">Focus Industrial Region:</label>
+          <select id="filter-region" class="form-control">
+            <option value="ALL">All India (Active Hotspots)</option>
+            <option value="MAHARASHTRA_TROMBAY">Mumbai / Trombay Industrial Zone</option>
+            <option value="GUJARAT_JAMNAGAR">Jamnagar Petrochemical Complex</option>
+            <option value="GUJARAT_ANKLESHWAR">Ankleshwar GIDC Chemical Hub</option>
+            <option value="ODISHA_PARADIP">Paradip Refinery & Port Area</option>
+            <option value="PUNJAB_AGRICULTURE">Punjab / Haryana Agricultural Belt</option>
+            <option value="UTTARAKHAND_FOREST">Uttarakhand Forest Reserves</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filter-class">Fire Classification Filter:</label>
+          <select id="filter-class" class="form-control">
+            <option value="ALL">All Categories</option>
+            <option value="INDUSTRIAL_FIRE_HAZARD">Industrial Fire Hazard</option>
+            <option value="PERSISTENT_INDUSTRIAL_FLARE">Persistent Industrial Flare</option>
+            <option value="URBAN_RESIDENTIAL_FIRE">Urban / Residential Fire</option>
+            <option value="FOREST_WILDFIRE">Forest / Wildfire</option>
+            <option value="AGRICULTURAL_BURNING">Agricultural Burning</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <div class="label-with-val">
+            <label for="filter-confidence">Min AI Confidence:</label>
+            <span id="confidence-val" class="mono">50%</span>
+          </div>
+          <input type="range" id="filter-confidence" min="50" max="99" value="50" class="form-range">
+        </div>
+
+        <div class="form-group">
+          <label>Sensor Source:</label>
+          <div class="radio-group">
+            <label><input type="radio" name="sensor-source" value="ALL" checked> All</label>
+            <label><input type="radio" name="sensor-source" value="VIIRS"> VIIRS (375m)</label>
+            <label><input type="radio" name="sensor-source" value="MODIS"> MODIS (1km)</label>
+          </div>
+        </div>
+
+        <button id="btn-refresh-feed" class="btn btn-secondary full-width">⟳ RE-QUERY SATELLITE PASS</button>
+      </section>
+
+      <!-- LEGEND -->
+      <section class="panel-section">
+        <h2 class="section-title">2. CLASSIFICATION LEGEND</h2>
+        <div class="legend-list">
+          <div class="legend-item"><span class="badge-dot dot-ind-fire"></span> <strong>Industrial Fire Hazard</strong> (Critical)</div>
+          <div class="legend-item"><span class="badge-dot dot-flare"></span> <strong>Persistent Flare / Kiln</strong> (Routine)</div>
+          <div class="legend-item"><span class="badge-dot dot-urban"></span> <strong>Urban Structure Fire</strong> (High)</div>
+          <div class="legend-item"><span class="badge-dot dot-wildfire"></span> <strong>Forest Wildfire</strong> (High)</div>
+          <div class="legend-item"><span class="badge-dot dot-agri"></span> <strong>Agricultural Burn</strong> (Moderate)</div>
+        </div>
+      </section>
+
+      <!-- INDUSTRY-SIDE ONE-CLICK EMERGENCY SOS TRIGGER -->
+      <section class="panel-section emergency-box">
+        <div class="emergency-header">
+          <span class="emergency-icon">⚠️</span>
+          <h2>ON-SITE PLANT EMERGENCY SOS</h2>
+        </div>
+        <p class="emergency-desc">
+          To be initiated by on-site factory staff when an abnormal runaway reaction, pressure rupture, or impending explosion is detected.
+        </p>
+
+        <div class="form-group">
+          <label for="sos-facility">Select Affected Facility:</label>
+          <select id="sos-facility" class="form-control">
+            <option value="FAC-01">BPCL Refinery Trombay (Mumbai)</option>
+            <option value="FAC-02">Reliance Petrochemical Complex (Jamnagar)</option>
+            <option value="FAC-03">Ankleshwar Chemical Unit #4 (Gujarat)</option>
+            <option value="FAC-04">Indian Oil Refinery (Paradip)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sos-hazard">Hazard Failure Mode:</label>
+          <select id="sos-hazard" class="form-control">
+            <option value="RUNAWAY_REACTION">Exothermic Runaway Reaction / Overpressure</option>
+            <option value="HYDROCARBON_LEAK">Pressurized Hydrocarbon Gas Leak</option>
+            <option value="TANK_IGNITION">Fuel Storage Tank Ignition</option>
+            <option value="TOXIC_EMISSION">Toxic Vapour Cloud Dispersion</option>
+          </select>
+        </div>
+
+        <div class="sos-action-block">
+          <button id="btn-trigger-sos" class="btn btn-danger full-width">
+            🚨 TRIGGER EMERGENCY SOS & EVACUATION
+          </button>
+          <span class="sos-subtext">Instantly dispatches Fire Brigade & calculates geofenced civilian evacuation buffer.</span>
+        </div>
+      </section>
+
+    </aside>
+
+    <!-- CENTER CANVAS: LEAFLET GIS MAP -->
+    <section class="map-container">
+      <div id="gis-map"></div>
+      
+      <!-- MAP CONTROLS OVERLAY -->
+      <div class="map-overlay-hud">
+        <div class="hud-item">
+          <span>ACTIVE DETECTIONS:</span> <strong id="hud-total-count">0</strong>
+        </div>
+        <div class="hud-item">
+          <span>CRITICAL HAZARDS:</span> <strong id="hud-critical-count" class="text-danger">0</strong>
+        </div>
+        <div class="hud-item">
+          <span>BASEMAP:</span>
+          <select id="basemap-selector" class="select-sm">
+            <option value="dark">OpenStreetMap (Scientific)</option>
+            <option value="osm">OpenStreetMap Standard</option>
+            <option value="satellite">Esri World Imagery (Satellite)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ACTIVE SOS ALERT BANNER -->
+      <div id="sos-active-banner" class="sos-banner hidden">
+        <div class="banner-content">
+          <span class="blink-tag">🚨 ACTIVE EMERGENCY EVACUATION PROTOCOL IN PROGRESS</span>
+          <span id="sos-banner-text">Facility: BPCL Trombay | Mandatory Evacuation Zone A (500m) | Fire Units Dispatched</span>
+        </div>
+        <button id="btn-dismiss-sos" class="btn btn-sm btn-outline">DISMISS DRILL</button>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: THERMAL ANOMALY & THREAT DOSSIER -->
+    <aside class="side-panel right-panel">
+      <div class="panel-section-header">
+        <h2 class="section-title">3. AUTONOMOUS THERMAL DOSSIER</h2>
+        <span id="dossier-id" class="mono text-muted">SELECT A HOTSPOT</span>
+      </div>
+
+      <div id="dossier-empty" class="empty-state">
+        <p>Click on any thermal hotspot on the map to view the autonomous AI classification, confidence percentage, threat level, and historical activity.</p>
+      </div>
+
+      <div id="dossier-content" class="hidden">
+        
+        <!-- SECTION A: PRIMARY VERDICT & CONFIDENCE -->
+        <div class="dossier-card primary-verdict-card">
+          <div class="card-header-row">
+            <span class="card-label">AUTONOMOUS AI CLASSIFICATION</span>
+            <span id="verdict-threat-badge" class="threat-badge threat-critical">CRITICAL</span>
+          </div>
+          <h3 id="verdict-class-name" class="verdict-title">Industrial Fire Hazard</h3>
+          
+          <div class="confidence-container">
+            <div class="conf-text-row">
+              <span>Overall AI Confidence:</span>
+              <strong id="verdict-confidence-pct" class="mono conf-highlight">96.4%</strong>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="verdict-conf-bar" class="progress-bar-fill" style="width: 96.4%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION B: PROBABILITY DISTRIBUTION ACROSS ALL 5 CLASSES -->
+        <div class="dossier-card">
+          <div class="card-label">PROBABILITY DISTRIBUTION (% BY CLASS)</div>
+          <div id="probability-breakdown-list" class="prob-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- SECTION C: LOCATION & OSM PROXIMITY -->
+        <div class="dossier-card">
+          <div class="card-label">GEOLOCATION & INFRASTRUCTURE CONTEXT</div>
+          <table class="dossier-table">
+            <tr>
+              <td>Coordinates:</td>
+              <td id="meta-coords" class="mono bold">-</td>
+            </tr>
+            <tr>
+              <td>Region / District:</td>
+              <td id="meta-region">-</td>
+            </tr>
+            <tr>
+              <td>Nearest Infrastructure:</td>
+              <td id="meta-facility" class="bold">-</td>
+            </tr>
+            <tr>
+              <td>Distance to Industry:</td>
+              <td id="meta-dist-ind" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Distance to Residential:</td>
+              <td id="meta-dist-res" class="mono">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- SECTION D: HISTORICAL RECURRENCE -->
+        <div class="dossier-card">
+          <div class="card-label">HISTORICAL PERSISTENCE & FREQUENCY</div>
+          <table class="dossier-table">
+            <tr>
+              <td>Past 30 Days Detections:</td>
+              <td id="meta-p30" class="mono bold">-</td>
+            </tr>
+            <tr>
+              <td>Past 365 Days Detections:</td>
+              <td id="meta-p365" class="mono bold">-</td>
+            </tr>
+            <tr>
+              <td>Recurrence Evaluation:</td>
+              <td id="meta-recurrence-verdict" class="bold">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- SECTION E: RAW SATELLITE SENSOR TELEMETRY -->
+        <div class="dossier-card">
+          <div class="card-label">NASA FIRMS THERMAL SENSOR TELEMETRY</div>
+          <table class="dossier-table">
+            <tr>
+              <td>Sensor / Satellite:</td>
+              <td id="meta-sensor" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Detection Time:</td>
+              <td id="meta-time" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Brightness Temperature:</td>
+              <td id="meta-brightness" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Fire Radiative Power (FRP):</td>
+              <td id="meta-frp" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Day / Night Flag:</td>
+              <td id="meta-daynight">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- SECTION E2: MULTI-SENSOR SATELLITE EVIDENCE (SENTINEL-1 & SENTINEL-2) -->
+        <div class="dossier-card sentinel-card">
+          <div class="card-label">🛰️ MULTI-SENSOR SATELLITE FUSION (ESA COPERNICUS)</div>
+          <table class="dossier-table">
+            <tr>
+              <td>Sentinel-2 Optical (MSI):</td>
+              <td id="meta-sentinel2-context" class="bold text-accent">-</td>
+            </tr>
+            <tr>
+              <td>Vegetation Index (NDVI):</td>
+              <td id="meta-ndvi" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Normalized Burn Ratio (NBR):</td>
+              <td id="meta-nbr" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Sentinel-1 C-Band SAR:</td>
+              <td id="meta-sar-cloud" class="bold text-ok">100% (Cloud Penetrating)</td>
+            </tr>
+            <tr>
+              <td>Radar Backscatter (VV/VH):</td>
+              <td id="meta-sar-db" class="mono">-</td>
+            </tr>
+            <tr>
+              <td>Radar Structural Verdict:</td>
+              <td id="meta-sar-verdict" class="bold">-</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- SECTION F: AUTONOMOUS ACTION RECOMMENDATIONS -->
+        <div class="dossier-card action-card">
+          <div class="card-label">AUTONOMOUS RECOMMENDATION</div>
+          <p id="action-recommendation-text" class="action-text">-</p>
+          <div class="dossier-button-group">
+            <button id="btn-dispatch-fire" class="btn btn-danger btn-sm">🚨 DISPATCH FIRE DEPT</button>
+            <button id="btn-alert-civilians" class="btn btn-warning btn-sm">📢 EVACUATE CIVILIANS</button>
+            <button id="btn-export-dossier" class="btn btn-secondary btn-sm">📄 EXPORT DOSSIER</button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js?v=2.0.1"></script>
+</body>
+</html>
